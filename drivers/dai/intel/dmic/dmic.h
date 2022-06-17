@@ -152,7 +152,11 @@
 #define OUTCONTROL0_FCI(x)			SET_BIT(24, x)
 #define OUTCONTROL0_BFTH(x)			SET_BITS(23, 20, x)
 #define OUTCONTROL0_OF(x)			SET_BITS(19, 18, x)
+#if defined CONFIG_SOC_SERIES_INTEL_ACE
 #define OUTCONTROL0_IPM(x)                      SET_BITS(17, 15, x)
+#else
+#define OUTCONTROL0_IPM(x)                      SET_BITS(17, 16, x)
+#endif
 #define OUTCONTROL0_IPM_SOURCE_1(x)		SET_BITS(14, 13, x)
 #define OUTCONTROL0_IPM_SOURCE_2(x)		SET_BITS(12, 11, x)
 #define OUTCONTROL0_IPM_SOURCE_3(x)		SET_BITS(10, 9, x)
@@ -165,7 +169,11 @@
 #define OUTCONTROL0_FCI_GET(x)			GET_BIT(24, x)
 #define OUTCONTROL0_BFTH_GET(x)			GET_BITS(23, 20, x)
 #define OUTCONTROL0_OF_GET(x)			GET_BITS(19, 18, x)
+#if defined CONFIG_SOC_SERIES_INTEL_ACE
 #define OUTCONTROL0_IPM_GET(x)			GET_BITS(17, 15, x)
+#else
+#define OUTCONTROL0_IPM_GET(x)			GET_BITS(17, 16, x)
+#endif
 #define OUTCONTROL0_IPM_SOURCE_1_GET(x)		GET_BITS(14, 13, x)
 #define OUTCONTROL0_IPM_SOURCE_2_GET(x)		GET_BITS(12, 11, x)
 #define OUTCONTROL0_IPM_SOURCE_3_GET(x)		GET_BITS(10,  9, x)
@@ -184,7 +192,11 @@
 #define OUTCONTROL1_FCI(x)			SET_BIT(24, x)
 #define OUTCONTROL1_BFTH(x)			SET_BITS(23, 20, x)
 #define OUTCONTROL1_OF(x)			SET_BITS(19, 18, x)
+#if defined CONFIG_SOC_SERIES_INTEL_ACE
 #define OUTCONTROL1_IPM(x)                      SET_BITS(17, 15, x)
+#else
+#define OUTCONTROL1_IPM(x)                      SET_BITS(17, 16, x)
+#endif
 #define OUTCONTROL1_IPM_SOURCE_1(x)		SET_BITS(14, 13, x)
 #define OUTCONTROL1_IPM_SOURCE_2(x)		SET_BITS(12, 11, x)
 #define OUTCONTROL1_IPM_SOURCE_3(x)		SET_BITS(10, 9, x)
@@ -197,7 +209,11 @@
 #define OUTCONTROL1_FCI_GET(x)			GET_BIT(24, x)
 #define OUTCONTROL1_BFTH_GET(x)			GET_BITS(23, 20, x)
 #define OUTCONTROL1_OF_GET(x)			GET_BITS(19, 18, x)
+#if defined CONFIG_SOC_SERIES_INTEL_ACE
 #define OUTCONTROL1_IPM_GET(x)			GET_BITS(17, 15, x)
+#else
+#define OUTCONTROL1_IPM_GET(x)			GET_BITS(17, 16, x)
+#endif
 #define OUTCONTROL1_IPM_SOURCE_1_GET(x)		GET_BITS(14, 13, x)
 #define OUTCONTROL1_IPM_SOURCE_2_GET(x)		GET_BITS(12, 11, x)
 #define OUTCONTROL1_IPM_SOURCE_3_GET(x)		GET_BITS(10,  9, x)

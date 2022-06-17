@@ -146,7 +146,7 @@ static void dai_dmic_irq_handler(const void *data)
 	/* Trace OUTSTAT0 register */
 	val0 = dai_dmic_read(dmic, OUTSTAT0);
 	val1 = dai_dmic_read(dmic, OUTSTAT1);
-	LOG_INF("dmic_irq_handler(), OUTSTAT0 = 0x%x, OUTSTAT1 = 0x%x", val0, val1);
+	LOG_DBG("dmic_irq_handler(), OUTSTAT0 = 0x%x, OUTSTAT1 = 0x%x", val0, val1);
 
 	if (val0 & OUTSTAT0_ROR_BIT) {
 		LOG_ERR("dmic_irq_handler(): full fifo A or PDM overrun");
@@ -163,30 +163,55 @@ static void dai_dmic_irq_handler(const void *data)
 
 static inline void dai_dmic_dis_clk_gating(const struct dai_intel_dmic *dmic)
 {
+#if CONFIG_SOC_SERIES_INTEL_CAVS_V15
+	(void)index;
+	uint32_t shim_reg;
+
+	shim_reg = sys_read32(SHIM_CLKCTL) | SHIM_CLKCTL_DMICFDCGB;
+
+	sys_write32(shim_reg, SHIM_CLKCTL);
+
+	LOG_INF("dis-dmic-clk-gating index %d CLKCTL %08x", index, shim_reg);
+#else
 	/* Disable DMIC clock gating */
 	sys_write32((sys_read32(dmic->shim_base+DMICLCTL_OFFSET) | DMIC_DCGD),
 			dmic->shim_base+DMICLCTL_OFFSET);
+#endif
 }
 
 static inline void dai_dmic_en_clk_gating(const struct dai_intel_dmic *dmic)
 {
+#if CONFIG_SOC_SERIES_INTEL_CAVS_V15
+	(void)index;
+	uint32_t shim_reg;
+
+	shim_reg = sys_read32(SHIM_CLKCTL) & ~SHIM_CLKCTL_DMICFDCGB;
+
+	sys_write32(shim_reg, SHIM_CLKCTL);
+
+	LOG_INF("en-dmic-clk-gating index %d CLKCTL %08x", index, shim_reg);
+#else
 	/* Enable DMIC clock gating */
 	sys_write32((sys_read32(dmic->shim_base+DMICLCTL_OFFSET) & ~DMIC_DCGD),
 			dmic->shim_base+DMICLCTL_OFFSET);
+#endif
 }
 
 static inline void dai_dmic_en_power(const struct dai_intel_dmic *dmic)
 {
+#if !CONFIG_SOC_SERIES_INTEL_CAVS_V15
 	/* Enable DMIC power */
 	sys_write32((sys_read32(dmic->shim_base+DMICLCTL_OFFSET) | DMICLCTL_SPA),
 			dmic->shim_base+DMICLCTL_OFFSET);
-
+#endif
 }
 static inline void dai_dmic_dis_power(const struct dai_intel_dmic *dmic)
 {
+#if !CONFIG_SOC_SERIES_INTEL_CAVS_V15
 	/* Disable DMIC power */
 	sys_write32((sys_read32(dmic->shim_base+DMICLCTL_OFFSET) & (~DMICLCTL_SPA)),
 			dmic->shim_base+DMICLCTL_OFFSET);
+#endif
 }
 
 static int dai_dmic_probe(struct dai_intel_dmic *dmic)
@@ -209,6 +234,7 @@ static int dai_dmic_probe(struct dai_intel_dmic *dmic)
 	dai_dmic_claim_ownership(dmic);
 
 	irq_enable(dmic->irq);
+
 	return 0;
 }
 
@@ -360,9 +386,11 @@ static void dai_dmic_start(struct dai_intel_dmic *dmic)
 		if (mic_a && mic_b) {
 			dai_dmic_update_bits(dmic, base[i] + CIC_CONTROL,
 					     CIC_CONTROL_CIC_START_A_BIT |
-					     CIC_CONTROL_CIC_START_B_BIT,
+					     CIC_CONTROL_CIC_START_B_BIT |
+					     CIC_CONTROL_MIC_MUTE_BIT,
 					     CIC_CONTROL_CIC_START_A(1) |
-					     CIC_CONTROL_CIC_START_B(1));
+					     CIC_CONTROL_CIC_START_B(1) |
+					     CIC_CONTROL_MIC_MUTE(0));
 			dai_dmic_update_bits(dmic, base[i] + MIC_CONTROL,
 					     MIC_CONTROL_PDM_EN_A_BIT |
 					     MIC_CONTROL_PDM_EN_B_BIT,
@@ -370,15 +398,19 @@ static void dai_dmic_start(struct dai_intel_dmic *dmic)
 					     MIC_CONTROL_PDM_EN_B(1));
 		} else if (mic_a) {
 			dai_dmic_update_bits(dmic, base[i] + CIC_CONTROL,
-					     CIC_CONTROL_CIC_START_A_BIT,
-					     CIC_CONTROL_CIC_START_A(1));
+					     CIC_CONTROL_CIC_START_A_BIT |
+					     CIC_CONTROL_MIC_MUTE_BIT,
+					     CIC_CONTROL_CIC_START_A(1) |
+					     CIC_CONTROL_MIC_MUTE(0));
 			dai_dmic_update_bits(dmic, base[i] + MIC_CONTROL,
 					     MIC_CONTROL_PDM_EN_A_BIT,
 					     MIC_CONTROL_PDM_EN_A(1));
 		} else if (mic_b) {
 			dai_dmic_update_bits(dmic, base[i] + CIC_CONTROL,
-					     CIC_CONTROL_CIC_START_B_BIT,
-					     CIC_CONTROL_CIC_START_B(1));
+					     CIC_CONTROL_CIC_START_B_BIT |
+					     CIC_CONTROL_MIC_MUTE_BIT,
+					     CIC_CONTROL_CIC_START_B(1) |
+					     CIC_CONTROL_MIC_MUTE(0));
 			dai_dmic_update_bits(dmic, base[i] + MIC_CONTROL,
 					     MIC_CONTROL_PDM_EN_B_BIT,
 					     MIC_CONTROL_PDM_EN_B(1));
@@ -387,13 +419,21 @@ static void dai_dmic_start(struct dai_intel_dmic *dmic)
 		switch (dmic->dai_config_params.dai_index) {
 		case 0:
 			dai_dmic_update_bits(dmic, base[i] + FIR_CONTROL_A,
-					     FIR_CONTROL_A_START_BIT,
-					     FIR_CONTROL_A_START(fir_a));
+					     FIR_CONTROL_A_START_BIT |
+					     FIR_CONTROL_A_MUTE_BIT |
+					     BIT(4),
+					     FIR_CONTROL_A_START(fir_a) |
+					     FIR_CONTROL_A_MUTE(0) |
+					     FIR_CONTROL_A_DCCOMP(0));
 			break;
 		case 1:
 			dai_dmic_update_bits(dmic, base[i] + FIR_CONTROL_B,
-					     FIR_CONTROL_B_START_BIT,
-					     FIR_CONTROL_B_START(fir_b));
+					     FIR_CONTROL_B_START_BIT |
+					     FIR_CONTROL_B_MUTE_BIT |
+					     BIT(4),
+					     FIR_CONTROL_B_START(fir_b) |
+					     FIR_CONTROL_B_MUTE(0) |
+					     FIR_CONTROL_B_DCCOMP(0));
 			break;
 		}
 	}
@@ -404,6 +444,9 @@ static void dai_dmic_start(struct dai_intel_dmic *dmic)
 	for (i = 0; i < CONFIG_DAI_DMIC_HW_CONTROLLERS; i++) {
 		dai_dmic_update_bits(dmic, base[i] + CIC_CONTROL,
 				     CIC_CONTROL_SOFT_RESET_BIT, 0);
+
+		LOG_INF("dmic_start(), cic 0x%08x",
+			dai_dmic_read(dmic, base[i] + CIC_CONTROL));
 	}
 
 	/* Set bit dai->index */
@@ -416,7 +459,7 @@ static void dai_dmic_start(struct dai_intel_dmic *dmic)
 	dmic_sync_trigger(dmic);
 
 	LOG_INF("dmic_start(), dmic_active_fifos_mask = 0x%x",
-			dai_dmic_global.active_fifos_mask);
+		dai_dmic_global.active_fifos_mask);
 }
 
 static void dai_dmic_stop(struct dai_intel_dmic *dmic, bool stop_is_pause)
@@ -668,6 +711,4 @@ static int dai_dmic_initialize_device(const struct device *dev)
 		DMIC_DAI_INIT_PRIORITY,					\
 		&dai_dmic_ops);
 
-DT_INST_FOREACH_STATUS_OKAY(DAI_INTEL_DMIC_DEVICE_INIT);
-
-
+DT_INST_FOREACH_STATUS_OKAY(DAI_INTEL_DMIC_DEVICE_INIT)
