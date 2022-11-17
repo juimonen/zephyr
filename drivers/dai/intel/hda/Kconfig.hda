@@ -6,7 +6,7 @@
 config DAI_INTEL_HDA
 	bool "Intel HDA driver for Dai interface"
 	default y
-	depends on DT_HAS_INTEL_HDA_DAI_ENABLED
+	depends on DT_HAS_INTEL_ZEPHYR_HDA_DAI_ENABLED
 	select DMA
 	help
 	  Select this to enable Intel HDA driver.

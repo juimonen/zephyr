@@ -437,85 +437,11 @@
 			compatible = "intel,adsp-timer";
 			syscon = <&tts>;
 		};
+	};
 
-		/*
-		 * Can we fix this somehow?
-		 */
-		hda1: hda1 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda2: hda2 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda3: hda3 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda4: hda4 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda5: hda5 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda6: hda6 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda7: hda7 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda8: hda8 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda9: hda9 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda10: hda10 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda11: hda11 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda12: hda12 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda13: hda13 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda14: hda14 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda15: hda15 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda16: hda16 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda17: hda17 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda18: hda18 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
-		hda19: hda19 {
-			compatible = "intel,hda-dai";
-			status = "okay";
-		};
+	hda@1 {
+		compatible = "intel,zephyr-hda-dai";
+		reg = <1 1>;
+		status = "okay";
 	};
 };

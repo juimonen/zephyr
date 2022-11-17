@@ -11,7 +11,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
 
-#define DT_DRV_COMPAT intel_hda_dai
+#define DT_DRV_COMPAT intel_zephyr_hda_dai
 #define LOG_DOMAIN dai_intel_hda
 
 LOG_MODULE_REGISTER(LOG_DOMAIN);

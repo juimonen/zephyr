@@ -319,4 +319,10 @@
 			interrupt-parent = <&cavs_intc3>;
 		};
 	};
+
+	hda@1 {
+		compatible = "intel,zephyr-hda-dai";
+		reg = <1 1>;
+		status = "okay";
+	};
 };
