@@ -1533,6 +1533,79 @@ out:
 	return ret;
 }
 
+static int dai_ssp_parse_aux_data(struct dai_intel_ssp *dp, uint8_t *aux_ptr, uint32_t aux_len)
+{
+	int aux_tlv_size = sizeof(struct ssp_intel_aux_tlv);
+	struct ssp_intel_aux_tlv *aux_tlv;
+	struct ssp_intel_mn_ctl *mn;
+	struct ssp_intel_clk_ctl *clk;
+	struct ssp_intel_tr_ctl *tr;
+	struct ssp_intel_run_ctl *run;
+	struct ssp_intel_node_ctl *node;
+	struct ssp_intel_sync_ctl *sync;
+	struct ssp_intel_ext_ctl *ext;
+	struct ssp_intel_link_ctl *link;
+	int hop, i;
+
+	for (i = 0; i < aux_len; i += hop) {
+		aux_tlv = (struct ssp_intel_aux_tlv *)(aux_ptr);
+		switch (aux_tlv->type) {
+		case SSP_MN_DIVIDER_CONTROLS:
+			mn = (struct ssp_intel_mn_ctl*)&aux_tlv->val;
+			LOG_INF("%s mn div_m %u", __func__, mn->div_m);
+			LOG_INF("%s mn div_n %u", __func__, mn->div_n);
+			break;
+		case SSP_DMA_CLK_CONTROLS:
+			clk =(struct ssp_intel_clk_ctl*)&aux_tlv->val;
+			LOG_INF("%s clk start %u", __func__, clk->start);
+			LOG_INF("%s clk stop %u", __func__, clk->stop);
+			break;
+		case SSP_DMA_TRANSMISSION_START:
+		case SSP_DMA_TRANSMISSION_STOP:
+			tr = (struct ssp_intel_tr_ctl *)&aux_tlv->val;
+			LOG_INF("%s tr sampling_frequency %u", __func__, tr->sampling_frequency);
+			LOG_INF("%s tr bit_depth; %u", __func__, tr->bit_depth);
+			LOG_INF("%s tr channel_map %u", __func__, tr->channel_map);
+			LOG_INF("%s tr channel_config%u", __func__, tr->channel_config);
+			LOG_INF("%s tr interleaving_style %u", __func__, tr->interleaving_style);
+			LOG_INF("%s tr format %u", __func__, tr->format);
+			break;
+		case SSP_DMA_ALWAYS_RUNNING_MODE:
+			run = (struct ssp_intel_run_ctl *)&aux_tlv->val;
+			LOG_INF("%s run enabled %u", __func__, run->enabled);
+			break;
+		case SSP_DMA_SYNC_DATA:
+			sync = (struct ssp_intel_sync_ctl *)&aux_tlv->val;
+			LOG_INF("%s sync sync_denominator %u", __func__, sync->sync_denominator);
+			LOG_INF("%s sync count %u", __func__, sync->count);
+			break;
+		case SSP_DMA_CLK_CONTROLS_EXT:
+			ext = (struct ssp_intel_ext_ctl *)&aux_tlv->val;
+			LOG_INF("%s ext ext_data %u", __func__, ext->ext_data);
+			break;
+		case SSP_LINK_CLK_SOURCE:
+			link = (struct ssp_intel_link_ctl *)&aux_tlv->val;
+			sys_write32(sys_read32(dai_ip_base(dp) + I2SLCTL_OFFSET) |
+				    I2CLCTL_MLCS(link->clock_source), dai_ip_base(dp) +
+				    I2SLCTL_OFFSET);
+			LOG_INF("%s link clock_source %u", __func__, link->clock_source);
+			break;
+		case SSP_DMA_SYNC_NODE:
+			node = (struct ssp_intel_node_ctl *)&aux_tlv->val;
+			LOG_INF("%s node node_id %u", __func__, node->node_id);
+			LOG_INF("%s node sampling_rate %u", __func__, node->sampling_rate);
+			break;
+		default:
+			LOG_ERR("%s undefined aux data type %u", __func__, aux_tlv->type);
+			return -EINVAL;
+		}
+		hop = aux_tlv->size + aux_tlv_size;
+		aux_ptr += hop;
+	}
+
+	return 0;
+}
+
 static int dai_ssp_set_config_blob(struct dai_intel_ssp *dp, const struct dai_config *cfg,
 				   const void *spec_config)
 {
@@ -1546,14 +1619,30 @@ static int dai_ssp_set_config_blob(struct dai_intel_ssp *dp, const struct dai_co
 	const struct dai_intel_ipc4_container *cont = spec_config;
 	const struct dai_intel_ipc4_ssp_configuration_blob *blob;
 	struct dai_intel_ssp_pdata *ssp = dai_get_drvdata(dp);
+	uint32_t cfg_len, aux_len;
 	uint32_t ssc0, sstsa, ssrsa;
-
-	blob = (const struct dai_intel_ipc4_ssp_configuration_blob *)cont->data;
+	int err;
 
 	/* set config only once for playback or capture */
 	if (ssp->state[DAI_DIR_PLAYBACK] > DAI_STATE_READY ||
 	    ssp->state[DAI_DIR_CAPTURE] > DAI_STATE_READY)
 		return 0;
+
+	blob = (const struct dai_intel_ipc4_ssp_configuration_blob *)cont->data;
+	cfg_len = sizeof(struct dai_intel_ipc4_ssp_configuration_blob);
+	aux_len = cont->size * 4 - cfg_len;
+
+	if (aux_len < 0) {
+		LOG_ERR("%s data blob size error",  __func__);
+		return -EINVAL;
+	}
+
+	/* parse aux data */
+	if (aux_len) {
+		err = dai_ssp_parse_aux_data(dp, (uint8_t *)blob + cfg_len, aux_len);
+		if (err)
+			return err;
+	}
 
 	ssc0 = blob->i2s_driver_config.i2s_config.ssc0;
 	sstsa = blob->i2s_driver_config.i2s_config.sstsa;
