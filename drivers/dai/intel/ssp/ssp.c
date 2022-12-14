@@ -1534,11 +1534,21 @@ out:
 }
 
 static int dai_ssp_set_config_blob(struct dai_intel_ssp *dp, const struct dai_config *cfg,
-				    const void *spec_config)
+				   const void *spec_config)
 {
-	const struct dai_intel_ipc4_ssp_configuration_blob *blob = spec_config;
+	struct dai_intel_ipc4_container {
+		uint32_t reserved0;
+		uint32_t reserved1;
+		uint32_t size;
+		uint8_t data[];
+	};
+
+	const struct dai_intel_ipc4_container *cont = spec_config;
+	const struct dai_intel_ipc4_ssp_configuration_blob *blob;
 	struct dai_intel_ssp_pdata *ssp = dai_get_drvdata(dp);
 	uint32_t ssc0, sstsa, ssrsa;
+
+	blob = (const struct dai_intel_ipc4_ssp_configuration_blob *)cont->data;
 
 	/* set config only once for playback or capture */
 	if (ssp->state[DAI_DIR_PLAYBACK] > DAI_STATE_READY ||

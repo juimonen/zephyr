@@ -207,18 +207,26 @@ static int dai_nhlt_dmic_dai_params_get(struct dai_intel_dmic *dmic,
 
 int dai_dmic_set_config_nhlt(struct dai_intel_dmic *dmic, const void *bespoke_cfg)
 {
+	struct dai_intel_ipc4_container {
+		uint32_t reserved0;
+		uint32_t reserved1;
+		uint32_t size;
+		uint8_t data[];
+	};
+
 	struct nhlt_pdm_ctrl_cfg *pdm_cfg[DMIC_HW_CONTROLLERS_MAX];
 	struct nhlt_pdm_ctrl_fir_cfg *fir_cfg_a[DMIC_HW_CONTROLLERS_MAX];
 	struct nhlt_pdm_ctrl_fir_cfg *fir_cfg_b[DMIC_HW_CONTROLLERS_MAX];
 	struct nhlt_pdm_fir_coeffs *fir_a[DMIC_HW_CONTROLLERS_MAX] = {NULL};
 	struct nhlt_pdm_fir_coeffs *fir_b[DMIC_HW_CONTROLLERS_MAX];
+	const struct dai_intel_ipc4_container *cont = bespoke_cfg;
 	uint32_t out_control[DMIC_HW_FIFOS_MAX] = {0};
 	uint32_t channel_ctrl_mask;
 	uint32_t fir_control;
 	uint32_t pdm_ctrl_mask;
 	uint32_t ref = 0;
 	uint32_t val;
-	const uint8_t *p = bespoke_cfg;
+	const uint8_t *p = cont->data;
 	int num_fifos;
 	int num_pdm;
 	int fir_length_a;

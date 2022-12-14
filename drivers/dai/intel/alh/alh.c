@@ -38,10 +38,20 @@ static int dai_alh_set_config_tplg(struct dai_intel_alh *dp, const void *spec_co
 static int dai_alh_set_config_blob(struct dai_intel_alh *dp, const struct dai_config *cfg,
 				   const void *spec_config)
 {
-	struct dai_intel_alh_pdata *alh = dai_get_drvdata(dp);
-	const struct dai_intel_ipc4_alh_configuration_blob *blob = spec_config;
-	const struct ipc4_alh_multi_gtw_cfg *alh_cfg = &blob->alh_cfg;
+	struct dai_intel_ipc4_container {
+		uint32_t reserved0;
+		uint32_t reserved1;
+		uint32_t size;
+		uint8_t data[];
+	};
 
+	const struct dai_intel_ipc4_alh_configuration_blob *blob;
+	const struct ipc4_alh_multi_gtw_cfg *alh_cfg;
+	const struct dai_intel_ipc4_container *cont = spec_config;
+	struct dai_intel_alh_pdata *alh = dai_get_drvdata(dp);
+
+	blob = (const struct dai_intel_ipc4_alh_configuration_blob *)cont->data;
+	alh_cfg = &blob->alh_cfg;
 	alh->params.rate = cfg->rate;
 
 	for (int i = 0; i < alh_cfg->count; i++) {
