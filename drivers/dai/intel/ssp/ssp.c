@@ -1603,6 +1603,8 @@ static int dai_ssp_parse_aux_data(struct dai_intel_ssp *dp, const void *spec_con
 	aux_len = cfg_len - pre_aux_len;
 	aux_ptr = (uint8_t *)blob + pre_aux_len;
 
+	LOG_INF("%s aux_len %d", __func__, aux_len);
+
 	if (aux_len <= 0)
 		return 0;
 
@@ -1757,6 +1759,7 @@ static int dai_ssp_set_config_blob(struct dai_intel_ssp *dp, const struct dai_co
 		return 0;
 
 	if (blob15->version == SSP_BLOB_VER_1_5) {
+		LOG_INF("%s blob ver 1.5", __func__);
 		err = dai_ssp_parse_aux_data(dp, spec_config);
 		if (err)
 			return err;
@@ -1765,6 +1768,7 @@ static int dai_ssp_set_config_blob(struct dai_intel_ssp *dp, const struct dai_co
 		if (err)
 			return err;
 	} else {
+		LOG_INF("%s blob ver 1", __func__);
 		dai_ssp_set_reg_config(dp, cfg, &blob->i2s_driver_config.i2s_config);
 		err = dai_ssp_set_clock_control_ver_1(dp, &blob->i2s_driver_config.mclk_config);
 		if (err)
