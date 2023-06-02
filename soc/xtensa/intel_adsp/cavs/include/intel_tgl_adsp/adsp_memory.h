@@ -22,6 +22,9 @@
 #define RAM_BASE (L2_SRAM_BASE + CONFIG_HP_SRAM_RESERVE + VECTOR_TBL_SIZE)
 #define RAM_SIZE (L2_SRAM_SIZE - CONFIG_HP_SRAM_RESERVE - VECTOR_TBL_SIZE)
 
+/* L3 region (IMR), located in host memory */
+#define L3_MEM_BASE_ADDR (DT_REG_ADDR(DT_NODELABEL(imr1)))
+
 /* The rimage tool produces two blob addresses we need to find: one is
  * our bootloader code block which starts at its entry point, the
  * other is the "manifest" containing the HP-SRAM data to unpack,
